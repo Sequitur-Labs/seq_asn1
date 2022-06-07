@@ -1,7 +1,7 @@
 #include <common.h>
 #include <malloc.h>
 
-#include <seq/seq_asn1.h>
+#include "seq_asn1.h"
 
 //-----------------------------------------------
 // private
