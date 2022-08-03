@@ -1,4 +1,6 @@
-#include <common.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 #include <malloc.h>
 
 #include "seq_asn1.h"
@@ -9,7 +11,6 @@ static SeqDerNode *new_node( void )
 {
 	SeqDerNode *res=(SeqDerNode*)SEQ_ASN1_MALLOC(sizeof(SeqDerNode));
 	if(!res){
-		debug("Failed to allocate new node\n");
 		return NULL;
 	}
 	memset(res, 0, sizeof(SeqDerNode));
@@ -135,11 +136,27 @@ int seq_asn1_parse_der(SeqDerNode **destnode, uint8_t *buffer, size_t buffersize
 
 SeqDerNode *seq_asn1_parse_single_node( uint8_t *buffer, size_t buffersize )
 {
+	int res=SEQ_AP_OK;
 	size_t nodesize=0;
 	size_t bufferptr=0;
+
 	SeqDerNode *node=new_node();
-	if(node){
-		fill_node(node,&nodesize,buffer,bufferptr);
+	if(node) {
+		res=fill_node(node,&nodesize,buffer,bufferptr);
+
+		if (res == SEQ_AP_OK) {
+			//Check to make sure the buffer was valid.
+			bufferptr+=nodesize;
+
+			if (bufferptr>buffersize) {
+				res=SEQ_AP_ERROR;
+			}
+		}
+	}
+
+	if(res != SEQ_AP_OK) {
+		seq_asn1_free_tree(node, SEQ_AP_FREENODEONLY);
+		node = NULL;
 	}
 
 	return node;

@@ -1,4 +1,6 @@
-#include <common.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 #include <malloc.h>
 
 #include "seq_asn1.h"

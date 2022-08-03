@@ -1,4 +1,6 @@
-#include <common.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 #include <malloc.h>
 
 #include "seq_asn1.h"
@@ -157,7 +159,8 @@ int seq_asn1_set_big_int(SeqDerNode *node, uint8_t *value, size_t length)
 	//allocate at set to '0'
 	node->content = SEQ_ASN1_CALLOC(node->length, sizeof(uint8_t));
 	if(node->content) {
-		memcpy(node->content+offset, value, length);
+		uint8_t *buf = (uint8_t*)node->content;
+		memcpy(buf+offset, value, length);
 	} else {
 		res=-1;
 	}
@@ -169,7 +172,7 @@ int seq_asn1_set_big_int(SeqDerNode *node, uint8_t *value, size_t length)
 int seq_asn1_get_big_int(SeqDerNode *node, uint8_t *value, size_t *length)
 {
 	int res=0;
-	int vlen=0;
+	size_t vlen=0;
 	int index=0;
 	uint8_t *bigint = NULL;
 	if(!node || !value || !length) {
@@ -189,7 +192,7 @@ int seq_asn1_get_big_int(SeqDerNode *node, uint8_t *value, size_t *length)
 		return -1;
 	}
 
-	memcpy(value, node->content+(node->length-vlen), vlen);
+	memcpy(value, bigint+(node->length-vlen), vlen);
 	return res;
 }
 
