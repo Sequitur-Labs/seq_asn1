@@ -88,8 +88,6 @@ int seq_asn1_parse_der(SeqDerNode **destnode, uint8_t *buffer, size_t buffersize
 	size_t nodesize;
 	size_t bufferptr=0;
 
-	//debug("buffersize = %d\n",buffersize);
-	//clrHeapReport(0, 0);
 	SeqDerNode* node=new_node();
 	SeqDerNode* parent=node;
 
@@ -106,12 +104,6 @@ int seq_asn1_parse_der(SeqDerNode **destnode, uint8_t *buffer, size_t buffersize
 
 		bufferptr+=nodesize;
 
-		if (bufferptr>buffersize) {
-			res=SEQ_AP_ERROR;
-			break;
-		}
-
-		//debug("bufferptr = %d nodesize = %d buffersize = %d\n",bufferptr,nodesize,buffersize);
 		if (node->composition) {
 			res = seq_asn1_parse_der(&node->children,node->content,node->length);
 			if (res) {
@@ -119,6 +111,7 @@ int seq_asn1_parse_der(SeqDerNode **destnode, uint8_t *buffer, size_t buffersize
 			}
 		}
 
+		//Don't overflow buffer
 		if (bufferptr<buffersize) {
 			node->next=new_node();
 			node=node->next;

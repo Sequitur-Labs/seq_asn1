@@ -108,7 +108,7 @@ SeqDerNode* seq_asn1_get_child(SeqDerNode *node, int index);
 
 // utilities
 void seq_asn1_set_integer(SeqDerNode *node, int value);
-int seq_asn1_get_integer(SeqDerNode *node);
+int seq_asn1_get_integer(SeqDerNode *node, int *value); //Returns '0' on success, negative numbers on error
 
 //Checks the first byte for >= 0x80, adds '00' if necessary.
 //Will always allocate a buffer for node and copy the value.

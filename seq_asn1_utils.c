@@ -18,106 +18,55 @@ static void asn1_flip(uint8_t *dst, uint8_t *src, size_t len)
 #define END_LITTLE 0
 #define END_BIG 1
 
-static size_t asn1_get_minimum_bytes(uint8_t *num, size_t len, int endian)
-{
-	size_t res=0;
-
-	switch (endian) {
-	case END_BIG:
-		{
-			size_t index=0;
-			for (index=0;index<len;index++) {
-				if (num[index])	{
-					res=len-index;
-					break;
-				}
-			}
-		}
-		break;
-	case END_LITTLE:
-		{
-			int index;
-			for (index=len-1;index>=0;index--) {
-				if (num[index])	{
-					res=len-index;
-					break;
-				}
-			}
-		}
-		break;
-	default: break;
-	}
-
-	if (res==0) {
-		res+=1;
-	}
-
-	return res;
-}
-
 //-----------------------------------------------
 //-----------------------------------------------
 // public
-
-// this will always allocate a buffer of minimum size
 void seq_asn1_set_integer(SeqDerNode *node, int value)
 {
-	if (node && node->tag==SEQ_ASN1_INTEGER) {
-		size_t len=sizeof(value);
-		uint8_t* buffer, *intbuffer=NULL;
-		size_t minbytes=0,ptrstart=0;
+	uint8_t *buffer=NULL;
+	size_t len=sizeof(value);
 
-
-		// little endian
-		buffer=(uint8_t*)SEQ_ASN1_MALLOC(len);
-		if(!buffer){
-			return;
-		}
-
-		memset(buffer, 0, len);
-		asn1_flip(buffer,(uint8_t*)&value,len);
-
-		// big endian
-		// buffer=(uint8_t*)&value;
-
-		// everything from this point on is big endian
-		minbytes=asn1_get_minimum_bytes(buffer, len, END_BIG);
-		ptrstart=len-minbytes;
-
-		node->length=minbytes;
-
-		intbuffer=(uint8_t*)SEQ_ASN1_MALLOC(minbytes);
-		if(!intbuffer){
-			free(buffer);
-			return;
-		}
-
-		memset(intbuffer, 0, minbytes);
-		memcpy(intbuffer,buffer+ptrstart,minbytes);
-
-		node->content=intbuffer;
-
-		if (buffer!=(uint8_t*)&value) { //Depends on buffer=(uint8_t*)&value; Currently commented out.
-			SEQ_ASN1_FREE(buffer);
-		}
+	// little endian
+	buffer=(uint8_t*)SEQ_ASN1_MALLOC(len);
+	if(!buffer){
+		return;
 	}
+
+	memset(buffer, 0, len);
+	asn1_flip(buffer,(uint8_t*)&value,len);
+
+	//New buffer allocated internally
+	seq_asn1_set_big_int(node, buffer, len);
+
+	SEQ_ASN1_FREE(buffer);
 }
 
-int seq_asn1_get_integer(SeqDerNode *node)
+int seq_asn1_get_integer(SeqDerNode *node, int *value)
 {
 	int res=0;
-	if (node && node->tag==SEQ_ASN1_INTEGER) {
-		// error condition - this will be encountered for bigints...
-		if (node->length<=sizeof(int)) {
-			uint8_t* resptr=(uint8_t*)&res;
-			
-			// little endian
-			asn1_flip(resptr,node->content,node->length);
+	uint8_t *buffer=NULL;
+	size_t len = sizeof(int);
 
-			// big endian
-			// TBD
-		}
+	if(!node || !value){
+		return -1;
 	}
+
+	buffer = (uint8_t*)SEQ_ASN1_MALLOC(len);
+	if(!buffer) {
+		*value=0;
+		return -2;
+	}
+
+	memset(buffer, 0, len);
+	res = seq_asn1_get_big_int(node, buffer, &len);
+
+	if(res == 0) { //Success
+		// little endian
+		asn1_flip(value, buffer, len);
+	}
+
+	SEQ_ASN1_FREE(buffer);
+
 	return res;
 }
 
@@ -149,7 +98,7 @@ int seq_asn1_set_big_int(SeqDerNode *node, uint8_t *value, size_t length)
 	}
 
 	//Ensure not all 1s
-	if(value[0] >= 0x80){
+	if(value[0] == 0xFF){
 		offset++;
 	}
 
@@ -192,6 +141,7 @@ int seq_asn1_get_big_int(SeqDerNode *node, uint8_t *value, size_t *length)
 		return -1;
 	}
 
+	*length = vlen; //How much is actually copied.
 	memcpy(value, bigint+(node->length-vlen), vlen);
 	return res;
 }

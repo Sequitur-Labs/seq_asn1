@@ -8,11 +8,6 @@
 
 //-----------------------------------------------
 // private
-static int needs_padding_byte(SeqDerNode *node) {
-	return ((node->tag == SEQ_ASN1_INTEGER) &&
-			(((uint8_t*)node->content)[0] & 0x80));
-}
-
 static size_t get_length_size(size_t length)
 {
 	size_t res=0;
@@ -45,9 +40,6 @@ static size_t get_node_length(SeqDerNode *root)
 	} else {
 		res+=get_length_size(root->length);
 		res+=root->length;
-		if (needs_padding_byte(root)) {
-			res++;
-		}
 	}
 	return res;
 }
@@ -59,9 +51,6 @@ static size_t get_content_length(SeqDerNode *node)
 		res=seq_asn1_get_size(node->children);
 	} else {
 		res=node->length;
-		if (needs_padding_byte(node)) {
-			res++;
-		}
 	}
 	return res;
 }
@@ -128,11 +117,6 @@ static size_t write_node_content(uint8_t *buffer, SeqDerNode *node)
 	if(node->composition == SEQ_ASN1_CTYPE_CONSTRUCTED) {
 		res=write_node_tree(buffer,node->children);
 	} else {
-		/* Left-pad INTEGER with 0 if necessary */
-		if (needs_padding_byte(node)) {
-			buffer[0] = 0x0;
-			res = 1;
-		}
 		memcpy(buffer,node->content,node->length);
 		res = node->length;
 	}
