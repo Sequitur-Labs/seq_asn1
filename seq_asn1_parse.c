@@ -136,20 +136,6 @@ SeqDerNode *seq_asn1_parse_single_node( uint8_t *buffer, size_t buffersize )
 	SeqDerNode *node=new_node();
 	if(node) {
 		res=fill_node(node,&nodesize,buffer,bufferptr);
-
-		if (res == SEQ_AP_OK) {
-			//Check to make sure the buffer was valid.
-			bufferptr+=nodesize;
-
-			if (bufferptr>buffersize) {
-				res=SEQ_AP_ERROR;
-			}
-		}
-	}
-
-	if(res != SEQ_AP_OK) {
-		seq_asn1_free_tree(node, SEQ_AP_FREENODEONLY);
-		node = NULL;
 	}
 
 	return node;
