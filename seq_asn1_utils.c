@@ -62,7 +62,7 @@ int seq_asn1_get_integer(SeqDerNode *node, int *value)
 
 	if(res == 0) { //Success
 		// little endian
-		asn1_flip(value, buffer, len);
+		asn1_flip((uint8_t*)value, buffer, len);
 	}
 
 	SEQ_ASN1_FREE(buffer);
