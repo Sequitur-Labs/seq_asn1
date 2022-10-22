@@ -98,7 +98,7 @@ int seq_asn1_set_big_int(SeqDerNode *node, uint8_t *value, size_t length)
 	}
 
 	//Ensure not all 1s
-	if(value[0] == 0xFF){
+	if(value[0] >= 0x80){
 		offset++;
 	}
 
