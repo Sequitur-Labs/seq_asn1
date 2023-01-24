@@ -136,6 +136,10 @@ SeqDerNode *seq_asn1_parse_single_node( uint8_t *buffer, size_t buffersize )
 	SeqDerNode *node=new_node();
 	if(node) {
 		res=fill_node(node,&nodesize,buffer,bufferptr);
+		if (res !=SEQ_AP_OK) {
+			free(node);
+			node = NULL;
+		}
 	}
 
 	return node;
