@@ -73,6 +73,7 @@ struct dernode {
 	uint8_t cls;	     /*SEQ_ASN1_CLS_* */
 	uint8_t composition; /*SEQ_ASN1_CTYPE_* */
 	uint8_t tag;	 /*Type tag*/
+	uint8_t content_copied;	 /*Flag if content buffer is a copy*/
 	size_t length; 	 /*length of content*/
 	void *content; 	 /*value for node*/
  	void *raw;	    	/*Entire buffer with tag, length etc... in it*/

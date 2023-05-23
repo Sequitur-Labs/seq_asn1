@@ -177,6 +177,7 @@ SeqDerNode *seq_asn1_copy_node( SeqDerNode *in, uint8_t follow_sibling )
 		ret->content = SEQ_ASN1_MALLOC(ret->length);
 		if(ret->content) {
 			memcpy(ret->content, in->content, ret->length);
+			ret->content_copied = 1;
 		} else {
 			SEQ_ASN1_FREE(ret);
 			ret=NULL;

@@ -110,6 +110,7 @@ int seq_asn1_set_big_int(SeqDerNode *node, uint8_t *value, size_t length)
 	if(node->content) {
 		uint8_t *buf = (uint8_t*)node->content;
 		memcpy(buf+offset, value, length);
+		node->content_copied = 1;
 	} else {
 		res=-1;
 	}
@@ -167,7 +168,7 @@ void seq_asn1_walk_tree(SeqDerNode *node, SeqDerIterator iterator, void *additio
 static void free_node(SeqDerNode *node, void *additional)
 {
 	SeqFreeTreeMode* mode=(SeqFreeTreeMode*)additional;
-	if (*mode==SEQ_AP_FREECONTENT) {
+	if ((*mode==SEQ_AP_FREECONTENT) || (node->content_copied != 0)){
 		SEQ_ASN1_FREE(node->content);
 	}
 
