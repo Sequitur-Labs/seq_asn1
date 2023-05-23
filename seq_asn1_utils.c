@@ -21,7 +21,7 @@ static void asn1_flip(uint8_t *dst, uint8_t *src, size_t len)
 //-----------------------------------------------
 //-----------------------------------------------
 // public
-void seq_asn1_set_integer(SeqDerNode *node, int value)
+void seq_asn1_set_integer(SeqDerNode *node, unsigned int value)
 {
 	uint8_t *buffer=NULL;
 	size_t len=sizeof(value);
@@ -41,7 +41,7 @@ void seq_asn1_set_integer(SeqDerNode *node, int value)
 	SEQ_ASN1_FREE(buffer);
 }
 
-int seq_asn1_get_integer(SeqDerNode *node, int *value)
+int seq_asn1_get_integer(SeqDerNode *node, unsigned int *value)
 {
 	int res=0;
 	uint8_t *buffer=NULL;
@@ -62,6 +62,7 @@ int seq_asn1_get_integer(SeqDerNode *node, int *value)
 
 	if(res == 0) { //Success
 		// little endian
+		*value=0;
 		asn1_flip((uint8_t*)value, buffer, len);
 	}
 
