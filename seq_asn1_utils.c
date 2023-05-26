@@ -10,8 +10,8 @@
 static void asn1_flip(uint8_t *dst, uint8_t *src, size_t len)
 {
 	size_t index;
-	for (index=0;index<len;index++) {
-		dst[index]=src[len-1-index];
+	for (index = 0; index < len; index++) {
+		dst[index] = src[len - 1 - index];
 	}
 }
 
@@ -23,12 +23,12 @@ static void asn1_flip(uint8_t *dst, uint8_t *src, size_t len)
 // public
 void seq_asn1_set_integer(SeqDerNode *node, unsigned int value)
 {
-	uint8_t buffer[sizeof(value)]={0};
-	size_t len=sizeof(buffer);
+	uint8_t buffer[sizeof(value)] = { 0 };
+	size_t len = sizeof(buffer);
 
 	// little endian
 
-	asn1_flip(buffer,(uint8_t*)&value,len);
+	asn1_flip(buffer, (uint8_t *)&value, len);
 
 	//New buffer allocated internally
 	seq_asn1_set_big_int(node, buffer, len);
@@ -36,25 +36,24 @@ void seq_asn1_set_integer(SeqDerNode *node, unsigned int value)
 
 int seq_asn1_get_integer(SeqDerNode *node, unsigned int *value)
 {
-	int res=0;
-	uint8_t buffer[sizeof(*value)]={0};
+	int res = 0;
+	uint8_t buffer[sizeof(*value)] = { 0 };
 	size_t len = sizeof(buffer);
 
-	if(!node || !value){
+	if (!node || !value) {
 		return -1;
 	}
 
 	res = seq_asn1_get_big_int(node, buffer, &len);
 
-	if(res == 0) { //Success
+	if (res == 0) {         //Success
 		// little endian
-		*value=0;
-		asn1_flip((uint8_t*)value, buffer, len);
+		*value = 0;
+		asn1_flip((uint8_t *)value, buffer, len);
 	}
 
 	return res;
 }
-
 
 /*
 From the specification:
@@ -70,34 +69,33 @@ From the specification:
 //Will always allocate a buffer for node and copy the value.
 int seq_asn1_set_big_int(SeqDerNode *node, uint8_t *value, size_t length)
 {
-	int res=0;
-	int offset=0;
-	if(!node || !value){
+	int res = 0;
+	int offset = 0;
+	if (!node || !value) {
 		return -1;
 	}
-
 	//Shall not be all zero
-	while(!value[0] && (length > 1) && !(value[1] & 0x80)){
+	while (!value[0] && (length > 1) && !(value[1] & 0x80)) {
 		value++;
 		length--;
 	}
 
 	//Ensure not all 1s
-	if(value[0] >= 0x80){
+	if (value[0] >= 0x80) {
 		offset++;
 	}
 
-	node->tag=SEQ_ASN1_INTEGER;
-	node->length=length+offset;
+	node->tag = SEQ_ASN1_INTEGER;
+	node->length = length + offset;
 
 	//allocate at set to '0'
 	node->content = SEQ_ASN1_CALLOC(node->length, sizeof(uint8_t));
-	if(node->content) {
-		uint8_t *buf = (uint8_t*)node->content;
-		memcpy(buf+offset, value, length);
+	if (node->content) {
+		uint8_t *buf = (uint8_t *)node->content;
+		memcpy(buf + offset, value, length);
 		node->content_copied = 1;
 	} else {
-		res=-1;
+		res = -1;
 	}
 	return res;
 }
@@ -106,54 +104,51 @@ int seq_asn1_set_big_int(SeqDerNode *node, uint8_t *value, size_t length)
 //If length is not large enough to hold the number then the variable will hold the necessary length on -1 return
 int seq_asn1_get_big_int(SeqDerNode *node, uint8_t *value, size_t *length)
 {
-	int res=0;
-	size_t vlen=0;
-	int index=0;
+	int res = 0;
+	size_t vlen = 0;
+	int index = 0;
 	uint8_t *bigint = NULL;
-	if(!node || !value || !length) {
+	if (!node || !value || !length) {
 		return -2;
 	}
 
-	bigint = (uint8_t*)node->content;
+	bigint = (uint8_t *)node->content;
 	vlen = node->length;
 
-	while((bigint[index] == 0x00) && (vlen > 1)) {
+	while ((bigint[index] == 0x00) && (vlen > 1)) {
 		index++;
 		vlen--;
 	}
 
-	if(*length < vlen) {
-		*length=vlen;
+	if (*length < vlen) {
+		*length = vlen;
 		return -1;
 	}
 
-	*length = vlen; //How much is actually copied.
-	memcpy(value, bigint+(node->length-vlen), vlen);
+	*length = vlen;         //How much is actually copied.
+	memcpy(value, bigint + (node->length - vlen), vlen);
 	return res;
 }
-
 
 void seq_asn1_walk_tree(SeqDerNode *node, SeqDerIterator iterator, void *additional)
 {
 	if (node) {
 		if (node->next) {
-			seq_asn1_walk_tree(node->next,iterator,additional);
+			seq_asn1_walk_tree(node->next, iterator, additional);
 		}
 
 		if (node->children) {
-			seq_asn1_walk_tree(node->children,iterator,additional);
+			seq_asn1_walk_tree(node->children, iterator, additional);
 		}
 
-		iterator(node,additional);
+		iterator(node, additional);
 	}
 }
 
-
-
 static void free_node(SeqDerNode *node, void *additional)
 {
-	SeqFreeTreeMode* mode=(SeqFreeTreeMode*)additional;
-	if ((*mode==SEQ_AP_FREECONTENT) || (node->content_copied != 0)){
+	SeqFreeTreeMode *mode = (SeqFreeTreeMode *)additional;
+	if ((*mode == SEQ_AP_FREECONTENT) || (node->content_copied != 0)) {
 		SEQ_ASN1_FREE(node->content);
 	}
 
@@ -162,18 +157,5 @@ static void free_node(SeqDerNode *node, void *additional)
 
 void seq_asn1_free_tree(SeqDerNode *node, SeqFreeTreeMode mode)
 {
-	seq_asn1_walk_tree(node,free_node,(void*)&mode);
+	seq_asn1_walk_tree(node, free_node, (void *)&mode);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
