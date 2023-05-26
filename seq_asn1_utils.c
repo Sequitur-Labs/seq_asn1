@@ -23,41 +23,27 @@ static void asn1_flip(uint8_t *dst, uint8_t *src, size_t len)
 // public
 void seq_asn1_set_integer(SeqDerNode *node, unsigned int value)
 {
-	uint8_t *buffer=NULL;
-	size_t len=sizeof(value);
+	uint8_t buffer[sizeof(value)]={0};
+	size_t len=sizeof(buffer);
 
 	// little endian
-	buffer=(uint8_t*)SEQ_ASN1_MALLOC(len);
-	if(!buffer){
-		return;
-	}
 
-	memset(buffer, 0, len);
 	asn1_flip(buffer,(uint8_t*)&value,len);
 
 	//New buffer allocated internally
 	seq_asn1_set_big_int(node, buffer, len);
-
-	SEQ_ASN1_FREE(buffer);
 }
 
 int seq_asn1_get_integer(SeqDerNode *node, unsigned int *value)
 {
 	int res=0;
-	uint8_t *buffer=NULL;
-	size_t len = sizeof(int);
+	uint8_t buffer[sizeof(*value)]={0};
+	size_t len = sizeof(buffer);
 
 	if(!node || !value){
 		return -1;
 	}
 
-	buffer = (uint8_t*)SEQ_ASN1_MALLOC(len);
-	if(!buffer) {
-		*value=0;
-		return -2;
-	}
-
-	memset(buffer, 0, len);
 	res = seq_asn1_get_big_int(node, buffer, &len);
 
 	if(res == 0) { //Success
@@ -65,8 +51,6 @@ int seq_asn1_get_integer(SeqDerNode *node, unsigned int *value)
 		*value=0;
 		asn1_flip((uint8_t*)value, buffer, len);
 	}
-
-	SEQ_ASN1_FREE(buffer);
 
 	return res;
 }

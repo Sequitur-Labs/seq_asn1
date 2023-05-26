@@ -14,9 +14,8 @@ static size_t get_length_size(size_t length)
 	if (length<128) {
 		res=1;
 	} else {
-		int bytecount=1;
+		size_t bytecount=1;
 		while (length) {
-			// this has to be adjusted for endianness!!
 			length=length>>8;
 			bytecount++;
 		}
@@ -60,11 +59,9 @@ static size_t write_node_header(uint8_t* buffer, SeqDerNode *node)
 	unsigned int index=0;
 	size_t res=0;
 	uint8_t idbyte=0;
-	uint8_t *length;
 
 	size_t contentlength=0, lengthsize=0;
 	uint8_t lengthbyte=0;
-	uint8_t *contentptr=NULL;
 
 	// SEQ_ASN1_CLS_UNIVERSAL == 0;
 	// idbyte=ASN1_CLS_UNIVERSAL<<6;
@@ -72,38 +69,22 @@ static size_t write_node_header(uint8_t* buffer, SeqDerNode *node)
 	idbyte |= (node->cls<<6);
 	idbyte |= (node->composition<<5);
 
-	memcpy(buffer,&idbyte,1);
-	res=1;
+	buffer[res++]=idbyte;
 
 	contentlength=get_content_length(node);
 	lengthsize=get_length_size(contentlength);
-	contentptr=((uint8_t*)&contentlength);
 
 	if (contentlength>127){
 		// decrement length size by one byte (this is the lengthbyte indicator)
 		lengthsize-=1;
-		length=SEQ_ASN1_MALLOC(lengthsize);
-		if(!length){
-			res=0;
-			return res;
-		}
-
 		lengthbyte=128+lengthsize;
+		buffer[res++]=lengthbyte;
 		// convert to BIG_ENDIAN
 		for (index=0;index<lengthsize;index++){
-			length[(lengthsize-1)-index]=*contentptr;
-			contentptr++;
+			buffer[res++]=(contentlength>>(8*(lengthsize-1-index)))&0xff;
 		}
-		memcpy(buffer+res,&lengthbyte,1);
-		res+=1;
-		memcpy(buffer+res,length,lengthsize);
-		res+=lengthsize;
-
-		SEQ_ASN1_FREE(length);
 	} else {
-		lengthbyte=contentlength;
-		memcpy(buffer+res,&lengthbyte,1);
-		res+=1;
+		buffer[res++]=(uint8_t)(contentlength);
 	}
 	
 	return res;

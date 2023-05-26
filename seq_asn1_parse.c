@@ -30,16 +30,14 @@ static int fill_content_length(size_t *length, size_t *lengthsize, uint8_t *buff
 	} else {
 		if (buffer[bufferindex]>0x80) {
 			// get length byte length
-			unsigned int numbytes=buffer[bufferindex]-128;
+			size_t numbytes=buffer[bufferindex]-128;
 			size_t clen=0;
-			uint8_t* clenptr=(uint8_t*)(&clen);
-			int bufferptr;
+			size_t bufferptr;
 
-			if (numbytes<=(int)sizeof(size_t)) {
-				// convert to LITTLE_ENDIAN
-				for (bufferptr=numbytes;bufferptr>0;bufferptr--) {
-					*clenptr=buffer[bufferindex+bufferptr];
-					clenptr++;
+			if (numbytes<=sizeof(size_t)) {
+				// convert to native endianness
+				for (bufferptr=1;bufferptr<=numbytes;bufferptr++) {
+					clen=(clen<<8)+buffer[bufferindex+bufferptr];
 				}
 
 				*length=clen;
@@ -85,7 +83,7 @@ static int fill_node(SeqDerNode *node, size_t *nodesize, uint8_t *buffer, size_t
 int seq_asn1_parse_der(SeqDerNode **destnode, uint8_t *buffer, size_t buffersize)
 {
 	int res=SEQ_AP_OK;
-	size_t nodesize;
+	size_t nodesize=0;
 	size_t bufferptr=0;
 
 	SeqDerNode* node=new_node();
