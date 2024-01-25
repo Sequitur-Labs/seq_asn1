@@ -1,7 +1,10 @@
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <malloc.h>
+
+#ifndef _LINUX_TYPES_H
+#include <stdint.h>
+#endif
 
 #include "seq_asn1.h"
 
